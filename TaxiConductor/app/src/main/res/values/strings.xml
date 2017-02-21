@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">TaxiConductor</string>
+    <string name="sign_in">REGISTRARSE</string>
+    <string name="email">Correo electrónico</string>
+    <string name="password">Contraseña</string>
+    <string name="login">Iniciar sesión</string>
+    <string name="remember_password">¿Olvidaste tu contraseña?</string>
+    <string name="name">Nombre</string>
+    <string name="last_name">Apellidos</string>
+    <string name="phone_number">Número de celular</string>
+    <string name="policies">Políticas de privacidad</string>
+    <string name="title_activity_home">Home</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
 </resources>
