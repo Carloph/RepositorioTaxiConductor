@@ -10,7 +10,7 @@
     <string name="phone_number">Número de celular</string>
     <string name="policies">Políticas de privacidad</string>
     <string name="title_activity_home">Home</string>
-
+    <string name="estatus_icon">Estatus</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
