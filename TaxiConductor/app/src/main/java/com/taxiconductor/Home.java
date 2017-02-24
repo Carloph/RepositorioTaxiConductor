@@ -52,15 +52,21 @@ public class Home extends AppCompatActivity
     LocationManager locationManager;
     static double latitude;
     static double longitude;
+<<<<<<< HEAD
     static String direction;
     private Button btn_status;
     static String contador="";
 
+=======
+    static String direccion;
+    int id;
+>>>>>>> origin/master
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+        id = (int)getIntent().getExtras().getSerializable("id");
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
