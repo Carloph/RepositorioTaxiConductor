@@ -40,11 +40,13 @@ public class Home extends AppCompatActivity
     static double latitude;
     static double longitude;
     static String direccion;
+    int id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+        id = (int)getIntent().getExtras().getSerializable("id");
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
