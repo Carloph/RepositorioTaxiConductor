@@ -39,12 +39,12 @@
                 android:layout_height="wrap_content"
                 >
                 <EditText
-                    android:id="@+id/editText_email"
+                    android:id="@+id/editText_usuario"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="20dp"
                     android:layout_marginRight="20dp"
-                    android:drawableLeft="@drawable/ic_email"
+                    android:drawableLeft="@drawable/ic_user"
                     android:drawablePadding="10dp"
                     android:ems="60"
                     android:hint="@string/email"

@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">TaxiConductor</string>
     <string name="sign_in">REGISTRARSE</string>
-    <string name="email">Correo electrónico</string>
+    <string name="email">Nombre de usuario</string>
     <string name="password">Contraseña</string>
     <string name="login">Iniciar sesión</string>
     <string name="remember_password">¿Olvidaste tu contraseña?</string>
