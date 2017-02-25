@@ -24,15 +24,7 @@ public interface APIService {
     Call<MSG> updateStatus(@Field("ID_CHOFER") int idchofer,
                                 @Field("ESTATUS") int estado);
 
-<<<<<<< HEAD
-
-
-=======
-    @FormUrlEncoded
-    @POST("services/get_driver_credential.php")
-    Call<MSG> getCredential(@Field("USUARIO") String usuario);
-
     @GET("obtener_choferes_por_user.php")
     Call<getDriverCredential> getLogin(@Query("USUARIO") String usuario);
->>>>>>> origin/master
+
 }

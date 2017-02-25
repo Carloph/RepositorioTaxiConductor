@@ -25,16 +25,13 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Login extends AppCompatActivity {
 
-<<<<<<< HEAD
-=======
+
     private EditText et_usuario;
     private EditText et_password;
->>>>>>> origin/master
     private Button btn_login;
     private final int REQUEST_ID_ACCESS_COURSE_FINE_LOCATION = 100;
     private ArrayList<String> user = new ArrayList<String>();
     private ArrayList<String> pass = new ArrayList<String>();
-    private static int id;
     private static String username;
     private static String contra;
     private Retrofit retrofit;
@@ -52,19 +49,13 @@ public class Login extends AppCompatActivity {
                     = ContextCompat.checkSelfPermission(Login.this, android.Manifest.permission.ACCESS_FINE_LOCATION);
             if (accessCoarsePermission != PackageManager.PERMISSION_GRANTED
                     || accessFinePermission != PackageManager.PERMISSION_GRANTED) {
-                // The Permissions to ask user.
+
                 String[] permissions = new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION,
                         android.Manifest.permission.ACCESS_FINE_LOCATION};
-                // Show a dialog asking the user to allow the above permissions.
                 ActivityCompat.requestPermissions(Login.this, permissions,
                         REQUEST_ID_ACCESS_COURSE_FINE_LOCATION);
             }
         }
-<<<<<<< HEAD
-        btn_login = (Button)findViewById(R.id.button_login);
-=======
->>>>>>> origin/master
-
         retrofit = new Retrofit.Builder()
                 .baseUrl("http://taxa.pe.hu/")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -75,15 +66,6 @@ public class Login extends AppCompatActivity {
         btn_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-<<<<<<< HEAD
-
-                Intent intent = new Intent(Login.this, Home.class);
-                startActivity(intent);
-
-
-            }
-        });
-=======
                 et_password = (EditText)findViewById(R.id.editText_password);
                 et_usuario = (EditText)findViewById(R.id.editText_usuario);
                 username = et_usuario.getText().toString();
@@ -129,6 +111,5 @@ public class Login extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Contraseña incorrecta", Toast.LENGTH_SHORT).show();
             }
         } else {Toast.makeText(getApplicationContext(), "Nombre de usuario incorrecto", Toast.LENGTH_SHORT).show();}
->>>>>>> origin/master
     }
 }

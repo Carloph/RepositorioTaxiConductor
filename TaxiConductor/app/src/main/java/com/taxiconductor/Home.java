@@ -2,6 +2,7 @@ package com.taxiconductor;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Criteria;
@@ -23,6 +24,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +37,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.taxiconductor.RetrofitPetition.APIClient;
 import com.taxiconductor.RetrofitPetition.APIService;
 import com.taxiconductor.RetrofitPetition.MSG;
+import com.taxiconductor.RetrofitPetition.Servicio;
+import com.taxiconductor.RetrofitPetition.getDriverCredential;
 
 import java.io.IOException;
 import java.util.List;
@@ -44,6 +48,8 @@ import java.util.TimerTask;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Home extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,LocationListener, OnMapReadyCallback {
@@ -54,34 +60,27 @@ public class Home extends AppCompatActivity
     private TextView tv_usuario;
     static double latitude;
     static double longitude;
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/master
     static String direction;
     private Button btn_status;
     static String contador="";
-
-
-<<<<<<< HEAD
-
-    int id = 1;
-=======
-    int id;
-
->>>>>>> origin/master
+    private static Retrofit retrofit;
+    private static GetTodos getTodos;
+    private boolean boton=false;
+    static int id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-<<<<<<< HEAD
-=======
         id = (int)getIntent().getExtras().getSerializable("id");
         String usuario = (String)getIntent().getExtras().getSerializable("usuario");
->>>>>>> origin/master
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        retrofit = new Retrofit.Builder()
+                .baseUrl("http://taxa.pe.hu/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        getTodos = retrofit.create(GetTodos.class);
         tv_usuario = (TextView)findViewById(R.id.tv_usuario_chofer);
         tv_usuario.setText("Usted está logueado como: "+usuario);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -89,7 +88,6 @@ public class Home extends AppCompatActivity
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
-
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
@@ -104,18 +102,13 @@ public class Home extends AppCompatActivity
             @Override
             public void onClick(View v) {
 
-
-
-
                 if(contador.equals("")){
                     update_status(id,1);
                     btn_status.setBackgroundColor(Color.GREEN);
                     contador= "2";
                 }
                 else if(contador.equals("2")){
-                    update_status(id,2);
-                    btn_status.setBackgroundColor(Color.YELLOW);
-                    contador = "3";
+                    btn_status.setEnabled(boton);
                 }
                 else if(contador.equals("3")){
                     update_status(id,3);
@@ -140,14 +133,13 @@ public class Home extends AppCompatActivity
                     public void run() {
 
                         getLoc();
-
+                        escuchaPeticion(id);
 
                     }
                 });
             }
         };
-
-        timer.schedule(task, 0, 10000);
+        timer.schedule(task, 0, 5000);
 
 
     }
@@ -164,30 +156,21 @@ public class Home extends AppCompatActivity
             onLocationChanged(location);
             latitude = location.getLatitude();
             longitude =  location.getLongitude();
-<<<<<<< HEAD
             update_data(id,latitude,longitude);
         }
         locationManager.requestLocationUpdates(bestProvider, 20000, 0, this);
-
-
-        //int id = 1;
-=======
-        }
-        locationManager.requestLocationUpdates(bestProvider, 20000, 0, this);
         update_data(id,latitude,longitude);
->>>>>>> origin/master
 
     }
 
     public void setLocation(Location loc) {
-        //Obtener la direccion de la calle a partir de la latitud y la longitud
         if (loc.getLatitude() != 0.0 && loc.getLongitude() != 0.0) {
             try {
                 Geocoder geocoder = new Geocoder(this, Locale.getDefault());
                 List<android.location.Address> list = geocoder.getFromLocation(loc.getLatitude(), loc.getLongitude(), 1);
                 if (!list.isEmpty()) {
                     android.location.Address DirCalle = list.get(0);
-                    direction="Estás en "+ DirCalle.getAddressLine(0)+ "\n Y tu posición es \n"+loc.getLatitude()+"/"+loc.getLongitude();
+                    direction= DirCalle.getAddressLine(0);
                 }
 
             } catch (IOException e) {
@@ -197,6 +180,35 @@ public class Home extends AppCompatActivity
         }
     }
 
+    private void escuchaPeticion(final int id_chofer) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Call<Servicio> call = getTodos.escucha(id_chofer);
+                try {
+                    Response<Servicio> response = call.execute();
+                    final Servicio result = response.body();
+                    System.out.println(result);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            rectificar(result);
+                        }
+                    });
+                } catch (IOException e) {}
+            }
+        }).start();
+    }
+
+    private void rectificar(Servicio solicitud) {
+        if (solicitud != null) {
+            System.out.println(solicitud.getLATITUD_CLIENTE());
+            System.out.println(solicitud.getLATITUD_DESTINO());
+            System.out.println(solicitud.getLONGITUD_CLIENTE());
+            System.out.println(solicitud.getLONGITUD_DESTINO());
+
+        } else {Toast.makeText(getApplicationContext(), "Nombre de usuario incorrecto", Toast.LENGTH_SHORT).show();}
+    }
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -306,21 +318,9 @@ public class Home extends AppCompatActivity
         userCall.enqueue(new Callback<MSG>() {
             @Override
             public void onResponse(Call<MSG> call, Response<MSG> response) {
-                //onSignupSuccess();
-                Log.d("onResponse", "" + response.body().getMessage());
-
-                if(response.body().getSuccess() == 1) {
-                    Log.d("onResponse", "" + "Se ha actualizado las coordenadas");
-
-                    // startActivity(new Intent(SignupActivity.this, MainActivity.class));
-                }else {
-                    Toast.makeText(Home.this, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
-                }
             }
-
             @Override
             public void onFailure(Call<MSG> call, Throwable t) {
-                Log.d("onFailure", t.toString());
             }
         });
     }
