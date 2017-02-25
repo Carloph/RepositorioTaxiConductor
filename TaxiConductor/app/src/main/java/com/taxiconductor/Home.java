@@ -52,21 +52,18 @@ public class Home extends AppCompatActivity
     LocationManager locationManager;
     static double latitude;
     static double longitude;
-<<<<<<< HEAD
     static String direction;
     private Button btn_status;
     static String contador="";
 
-=======
-    static String direccion;
-    int id;
->>>>>>> origin/master
+
+
+    int id = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        id = (int)getIntent().getExtras().getSerializable("id");
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -82,12 +79,16 @@ public class Home extends AppCompatActivity
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        //id = (int)getIntent().getExtras().getSerializable("id");
+
         btn_status = (Button) findViewById(R.id.button_status);
 
         btn_status.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int id = 1;
+
+
+
 
                 if(contador.equals("")){
                     update_status(id,1);
@@ -132,8 +133,6 @@ public class Home extends AppCompatActivity
         timer.schedule(task, 0, 10000);
 
 
-
-
     }
     public void getLoc(){
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -146,13 +145,14 @@ public class Home extends AppCompatActivity
         Location location = locationManager.getLastKnownLocation(bestProvider);
         if (location != null) {
             onLocationChanged(location);
+            latitude = location.getLatitude();
+            longitude =  location.getLongitude();
+            update_data(id,latitude,longitude);
         }
         locationManager.requestLocationUpdates(bestProvider, 20000, 0, this);
-        int user = 1;
-        double latitude = location.getLatitude();
-        double longitude =  location.getLongitude();
 
-        update_data(user,latitude,longitude);
+
+        //int id = 1;
 
     }
 
@@ -286,7 +286,6 @@ public class Home extends AppCompatActivity
                 //onSignupSuccess();
                 Log.d("onResponse", "" + response.body().getMessage());
 
-
                 if(response.body().getSuccess() == 1) {
                     Log.d("onResponse", "" + "Se ha actualizado las coordenadas");
 
@@ -324,6 +323,8 @@ public class Home extends AppCompatActivity
 
                     // startActivity(new Intent(SignupActivity.this, MainActivity.class));
                 }else {
+
+                    Log.d("onResponse", "" + "Hubo un error al actualizar las coordenadas");
                     Toast.makeText(Home.this, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
