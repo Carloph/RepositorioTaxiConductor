@@ -23,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -50,26 +51,28 @@ public class Home extends AppCompatActivity
     private GoogleMap mMap;
     public SupportMapFragment mapFragment;
     LocationManager locationManager;
+    private TextView tv_usuario;
     static double latitude;
     static double longitude;
-<<<<<<< HEAD
+
     static String direction;
     private Button btn_status;
     static String contador="";
 
-=======
-    static String direccion;
+
     int id;
->>>>>>> origin/master
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         id = (int)getIntent().getExtras().getSerializable("id");
+        String usuario = (String)getIntent().getExtras().getSerializable("usuario");
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        tv_usuario = (TextView)findViewById(R.id.tv_usuario_chofer);
+        tv_usuario.setText("Usted está logueado como: "+usuario);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -146,13 +149,11 @@ public class Home extends AppCompatActivity
         Location location = locationManager.getLastKnownLocation(bestProvider);
         if (location != null) {
             onLocationChanged(location);
+            latitude = location.getLatitude();
+            longitude =  location.getLongitude();
         }
         locationManager.requestLocationUpdates(bestProvider, 20000, 0, this);
-        int user = 1;
-        double latitude = location.getLatitude();
-        double longitude =  location.getLongitude();
-
-        update_data(user,latitude,longitude);
+        update_data(id,latitude,longitude);
 
     }
 
