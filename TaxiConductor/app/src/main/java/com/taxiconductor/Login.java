@@ -70,8 +70,12 @@ public class Login extends AppCompatActivity {
                 et_usuario = (EditText)findViewById(R.id.editText_usuario);
                 username = et_usuario.getText().toString();
                 contra=et_password.getText().toString();
-                if(TextUtils.isEmpty(et_usuario.getText().toString())||TextUtils.isEmpty(et_password.getText().toString())){
-                    Toast.makeText(getApplicationContext(), "Favor de rellenar los campos", Toast.LENGTH_SHORT).show();
+
+                if(et_usuario.getText().equals(null)||et_usuario.getText().toString().equals("")){
+                    et_usuario.setError("Ingrese usuario");
+                }
+                else if(et_password.getText().equals(null) || et_password.getText().toString().equals("")){
+                    et_password.setError("Ingrese contraseña");
                 }
                 else{loadSession(username,contra);}
             }
@@ -107,8 +111,9 @@ public class Login extends AppCompatActivity {
             }
             else{
                 et_password = (EditText)findViewById(R.id.editText_password);
+                et_usuario.setText("");
                 et_password.setText("");
-                Toast.makeText(getApplicationContext(), "Contraseña incorrecta", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Usuario o contraseña incorrecta", Toast.LENGTH_SHORT).show();
             }
         } else {Toast.makeText(getApplicationContext(), "Nombre de usuario incorrecto", Toast.LENGTH_SHORT).show();}
     }

@@ -1,7 +1,9 @@
 package com.taxiconductor;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -17,6 +19,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -24,23 +27,31 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.taxiconductor.DirectionMaps.DirectionFinder;
+import com.taxiconductor.DirectionMaps.DirectionFinderListener;
+import com.taxiconductor.DirectionMaps.Route;
 import com.taxiconductor.RetrofitPetition.APIClient;
 import com.taxiconductor.RetrofitPetition.APIService;
 import com.taxiconductor.RetrofitPetition.MSG;
 import com.taxiconductor.RetrofitPetition.Servicio;
-import com.taxiconductor.RetrofitPetition.getDriverCredential;
-
+import android.os.Handler;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -52,9 +63,9 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Home extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener,LocationListener, OnMapReadyCallback {
+        implements NavigationView.OnNavigationItemSelectedListener,LocationListener, OnMapReadyCallback,DirectionFinderListener {
 
-    private GoogleMap mMap;
+    public static GoogleMap mMap;
     public SupportMapFragment mapFragment;
     LocationManager locationManager;
     private TextView tv_usuario;
@@ -65,14 +76,37 @@ public class Home extends AppCompatActivity
     static String contador="";
     private static Retrofit retrofit;
     private static GetTodos getTodos;
-    private boolean boton=false;
-    static int id;
+    static int id_var;
+
+    TimerTask mTimerTask;
+    final Handler handler = new Handler();
+    Timer t = new Timer();
+    public int nCounter = 0;
+
+    TimerTask mTimerTask2;
+    final Handler handler2 = new Handler();
+    Timer t2 = new Timer();
+    public int nCounter2 = 0;
+
+    private List<Marker> originMarkers = new ArrayList<>();
+    private List<Marker> destinationMarkers = new ArrayList<>();
+    private List<Polyline> polylinePaths = new ArrayList<>();
+    private ProgressDialog progressDialog;
+
+    public static String coordinates_origin="";
+    public static String coordinates_destination="";
+
+    static Servicio global;
+
+
+    public TextView tv_distance, tv_duration;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        id = (int)getIntent().getExtras().getSerializable("id");
+        id_var = (int)getIntent().getExtras().getSerializable("id");
         String usuario = (String)getIntent().getExtras().getSerializable("usuario");
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -97,49 +131,52 @@ public class Home extends AppCompatActivity
         //id = (int)getIntent().getExtras().getSerializable("id");
 
         btn_status = (Button) findViewById(R.id.button_status);
+        tv_distance = (TextView) findViewById(R.id.tvDistance);
+        tv_duration = (TextView) findViewById(R.id.tvDuration);
+
 
         btn_status.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 if(contador.equals("")){
-                    update_status(id,1);
+                    update_status(id_var,1);
                     btn_status.setBackgroundColor(Color.GREEN);
                     contador= "2";
+                    Toast.makeText(getApplication(),"Ahora está disponible, espere una solicitud de viaje",Toast.LENGTH_LONG).show();
+                    mMap.clear();
+                    tv_distance.setText("0 km");
+                    tv_duration.setText("0 min");
+
                 }
                 else if(contador.equals("2")){
-                    btn_status.setEnabled(boton);
+                    btn_status.setEnabled(false);
+                    Toast.makeText(getApplication(),"No puede cambiar de estado hasta que tenga una solicitud de viaje",Toast.LENGTH_LONG).show();
                 }
                 else if(contador.equals("3")){
-                    update_status(id,3);
+                    update_status(id_var,3);
                     btn_status.setBackgroundColor(ContextCompat.getColor(getApplication(), R.color.colorOrange));
                     contador = "4";
+                    Toast.makeText(getApplication(),"Esperando a que el pasajero aborde la unidad",Toast.LENGTH_LONG).show();
                 }
                 else if(contador.equals("4")){
-                    update_status(id,4);
+                    update_status(id_var,4);
+                    String orig= global.getLATITUD_CLIENTE()+","+global.getLONGITUD_CLIENTE();
+                    String dest =  global.getLATITUD_DESTINO()+","+global.getLONGITUD_DESTINO();
+                    coordinates_origin = orig;
+                    coordinates_destination = dest;
+                    sendRequest(orig,dest);
                     btn_status.setBackgroundColor(Color.RED);
                     contador = "";
+                    mapFragment.getMapAsync(Home.this);
+                    doTimerTask2();
+                    Toast.makeText(getApplication(),"El pasajero ha abordado el taxi, estás dirigiéndote a su destino",Toast.LENGTH_LONG).show();
                 }
             }
         });
 
-        final android.os.Handler handler = new android.os.Handler();
-        Timer timer = new Timer();
-
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                handler.post(new Runnable() {
-                    public void run() {
-
-                        getLoc();
-                        escuchaPeticion(id);
-
-                    }
-                });
-            }
-        };
-        timer.schedule(task, 0, 5000);
+        doTimerTask();
+        doTimerTask2();
 
 
     }
@@ -156,10 +193,10 @@ public class Home extends AppCompatActivity
             onLocationChanged(location);
             latitude = location.getLatitude();
             longitude =  location.getLongitude();
-            update_data(id,latitude,longitude);
+            update_data(id_var,latitude,longitude);
         }
         locationManager.requestLocationUpdates(bestProvider, 20000, 0, this);
-        update_data(id,latitude,longitude);
+        update_data(id_var,latitude,longitude);
 
     }
 
@@ -186,12 +223,52 @@ public class Home extends AppCompatActivity
             public void run() {
                 Call<Servicio> call = getTodos.escucha(id_chofer);
                 try {
-                    Response<Servicio> response = call.execute();
+                    final Response<Servicio> response = call.execute();
                     final Servicio result = response.body();
                     System.out.println(result);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            if (response!=null){
+                                stopTask2();
+                                AlertDialog.Builder dialog = new AlertDialog.Builder(Home.this);
+                                dialog.setCancelable(false);
+                                dialog.setTitle("Solicitar viaje");
+                                dialog.setMessage("¿Estás seguro de asignar este viaje al taxista?" );
+                                dialog.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        global  = result;
+                                        String orig = String.valueOf(latitude)+","+String.valueOf(longitude);
+                                        coordinates_origin =orig;
+                                        String dest =  result.getLATITUD_CLIENTE()+","+result.getLONGITUD_CLIENTE();
+                                        coordinates_destination = dest;
+                                        btn_status.setEnabled(true);
+                                        btn_status.setBackgroundColor(Color.YELLOW);
+                                        contador= "3";
+                                        Toast.makeText(getApplication(),"Conductor en camino...",Toast.LENGTH_SHORT).show();
+                                        update_status(id_var,2);
+                                        delete_solicitud(id_var);
+                                        sendRequest(orig,dest);
+
+                                    }
+                                }).setNegativeButton("Cancelar ", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        //Action for "Cancel".
+                                        delete_solicitud(id_var);
+                                        doTimerTask2();
+                                        Toast.makeText(getApplication(),"Ha cancelado el viaje solicitado",Toast.LENGTH_SHORT).show();
+
+                                    }
+                                });
+
+                                final AlertDialog alert = dialog.create();
+                                alert.show();
+
+
+
+                            }
                             rectificar(result);
                         }
                     });
@@ -271,7 +348,7 @@ public class Home extends AppCompatActivity
         latitude = location.getLatitude();
         longitude = location.getLongitude();
         setLocation(location);
-        mapFragment.getMapAsync(this);
+       // mapFragment.getMapAsync(this);
     }
 
     @Override
@@ -306,6 +383,64 @@ public class Home extends AppCompatActivity
             melbourne.showInfoWindow();
     }
 
+
+    public void doTimerTask(){
+
+        mTimerTask = new TimerTask() {
+            public void run() {
+                handler.post(new Runnable() {
+                    public void run() {
+                        nCounter++;
+                        // update TextView
+                        getLoc();
+
+                    }
+                });
+            }};
+
+        // public void schedule (TimerTask task, long delay, long period)
+        t.schedule(mTimerTask, 0, 10000);  //
+
+    }
+    public void doTimerTask2(){
+
+        mTimerTask2 = new TimerTask() {
+            public void run() {
+                handler2.post(new Runnable() {
+                    public void run() {
+                        nCounter2++;
+                        // update TextView
+
+                        escuchaPeticion(id_var);
+
+                    }
+                });
+            }};
+
+        // public void schedule (TimerTask task, long delay, long period)
+        t2.schedule(mTimerTask2, 0, 10000);  //
+
+    }
+
+
+    public void stopTask(){
+        if(mTimerTask!=null){
+
+            Log.e("Se ha cancelado", "la ubicación de los taxis");
+
+            mTimerTask.cancel();
+        }
+    }
+
+    public void stopTask2(){
+        if(mTimerTask2!=null){
+
+            Log.e("Se ha cancelado", "la ubicación de los taxis");
+
+            mTimerTask2.cancel();
+        }
+    }
+
     private void update_data(int id, double latitud, double longitud) {
 
 
@@ -337,19 +472,6 @@ public class Home extends AppCompatActivity
         userCall.enqueue(new Callback<MSG>() {
             @Override
             public void onResponse(Call<MSG> call, Response<MSG> response) {
-                //onSignupSuccess();
-                Log.d("onResponse", "" + response.body().getMessage());
-
-
-                if(response.body().getSuccess() == 1) {
-                    Log.d("onResponse", "" + "Se ha actualizado las coordenadas");
-
-                    // startActivity(new Intent(SignupActivity.this, MainActivity.class));
-                }else {
-
-                    Log.d("onResponse", "" + "Hubo un error al actualizar las coordenadas");
-                    Toast.makeText(Home.this, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
-                }
             }
 
             @Override
@@ -359,4 +481,145 @@ public class Home extends AppCompatActivity
         });
     }
 
+    private void delete_solicitud(int id) {
+
+
+        APIService service = APIClient.getClient().create(APIService.class);
+        //User user = new User(name, email, password);
+
+
+        Call<MSG> userCall = service.deleteSolicitud(id);
+
+        userCall.enqueue(new Callback<MSG>() {
+            @Override
+            public void onResponse(Call<MSG> call, Response<MSG> response) {
+
+            }
+
+            @Override
+            public void onFailure(Call<MSG> call, Throwable t) {
+                Log.d("onFailure", t.toString());
+            }
+        });
+    }
+
+
+    private void sendRequest(String orign, String destin) {
+
+
+        if (orign.isEmpty()) {
+            Toast.makeText(this, "Por favor ingrese la dirección de origen!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (destin.isEmpty()) {
+            Toast.makeText(this, "Por favor ingrese la dirección de destino!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            new DirectionFinder(this, orign, destin).execute();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    @Override
+    public void onDirectionFinderStart() {
+
+        progressDialog = ProgressDialog.show(this, "Por favor espere.",
+                "Localizando dirección..!", true);
+
+        if (originMarkers != null) {
+            for (Marker marker : originMarkers) {
+                marker.remove();
+            }
+        }
+
+        if (destinationMarkers != null) {
+            for (Marker marker : destinationMarkers) {
+                marker.remove();
+            }
+        }
+
+        if (polylinePaths != null) {
+            for (Polyline polyline : polylinePaths) {
+                polyline.remove();
+            }
+        }
+
+
+    }
+
+    @Override
+    public void onDirectionFinderSuccess(List<Route> routes) {
+
+        try {
+            progressDialog.dismiss();
+            polylinePaths = new ArrayList<>();
+            originMarkers = new ArrayList<>();
+            destinationMarkers = new ArrayList<>();
+
+            for (Route route : routes) {
+                // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, 13));
+                ((TextView) findViewById(R.id.tvDuration)).setText(route.duration.text);
+                ((TextView) findViewById(R.id.tvDistance)).setText(route.distance.text);
+
+                originMarkers.add(mMap.addMarker(new MarkerOptions()
+                        //             .title(nombre)
+                        .position(route.startLocation)));
+                destinationMarkers.add(mMap.addMarker(new MarkerOptions()
+                        .title(route.endAddress)
+                        .position(route.endLocation)));
+
+                PolylineOptions polylineOptions = new PolylineOptions().
+                        geodesic(true).
+                        color(Color.BLUE).
+                        width(10);
+
+                for (int i = 0; i < route.points.size(); i++)
+                    polylineOptions.add(route.points.get(i));
+
+                polylinePaths.add(mMap.addPolyline(polylineOptions));
+            }
+
+            Double origin_lat,origin_lng;
+            Double destination_lat,destination_lng;
+
+            String cadena[] = coordinates_origin.split(",");
+            origin_lat = Double.parseDouble(cadena[0]);
+            origin_lng = Double.parseDouble(cadena[1]);
+
+            String cadena2[] = coordinates_destination.split(",");
+            destination_lat = Double.parseDouble(cadena2[0]);
+            destination_lng = Double.parseDouble(cadena2[1]);
+
+            LatLng var_origen = new LatLng(origin_lat,origin_lng);
+            LatLng var_destino = new LatLng(destination_lat,destination_lng);
+
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            builder.include(var_origen);
+            builder.include(var_destino);
+            LatLngBounds bounds = builder.build();
+
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
+            mMap.animateCamera(cu, new GoogleMap.CancelableCallback() {
+                public void onCancel() {
+                }
+
+                public void onFinish() {
+                    CameraUpdate zout = CameraUpdateFactory.zoomBy(-1.0f);
+                    mMap.animateCamera(zout);
+                }
+            });
+
+        } catch (Exception e) {
+            Toast.makeText(getApplication(), "Hubo un error al obtener la ubicación .2" + e, Toast.LENGTH_LONG).show();
+        }
+
+    }
+
+    @Override
+    public void startActivityForResult(int requestCode, int resultCode, Intent data) {
+
+    }
 }

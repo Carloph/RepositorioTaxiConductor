@@ -24,6 +24,11 @@ public interface APIService {
     Call<MSG> updateStatus(@Field("ID_CHOFER") int idchofer,
                                 @Field("ESTATUS") int estado);
 
+    @FormUrlEncoded
+    @POST("services/delete_solicitud.php")
+    Call<MSG> deleteSolicitud(@Field("ID_CHOFER") int idchofer
+                          );
+
     @GET("obtener_choferes_por_user.php")
     Call<getDriverCredential> getLogin(@Query("USUARIO") String usuario);
 
