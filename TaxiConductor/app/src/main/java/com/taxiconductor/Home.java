@@ -73,7 +73,7 @@ public class Home extends AppCompatActivity
     static double longitude;
     static String direction;
     private Button btn_status;
-    static String contador="";
+    static int contador=0;
     private static Retrofit retrofit;
     private static GetTodos getTodos;
     static int id_var;
@@ -128,8 +128,6 @@ public class Home extends AppCompatActivity
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        //id = (int)getIntent().getExtras().getSerializable("id");
-
         btn_status = (Button) findViewById(R.id.button_status);
         tv_distance = (TextView) findViewById(R.id.tvDistance);
         tv_duration = (TextView) findViewById(R.id.tvDuration);
@@ -139,35 +137,35 @@ public class Home extends AppCompatActivity
             @Override
             public void onClick(View v) {
 
-                if(contador.equals("")){
+                if(contador==0){
+                    contador++;
                     update_status(id_var,1);
                     btn_status.setBackgroundColor(Color.GREEN);
-                    contador= "2";
                     Toast.makeText(getApplication(),"Ahora está disponible, espere una solicitud de viaje",Toast.LENGTH_LONG).show();
                     mMap.clear();
                     tv_distance.setText("0 km");
                     tv_duration.setText("0 min");
 
                 }
-                else if(contador.equals("2")){
+                else if(contador==1){
                     btn_status.setEnabled(false);
                     Toast.makeText(getApplication(),"No puede cambiar de estado hasta que tenga una solicitud de viaje",Toast.LENGTH_LONG).show();
                 }
-                else if(contador.equals("3")){
+                else if(contador==2){
                     update_status(id_var,3);
+                    contador++;
                     btn_status.setBackgroundColor(ContextCompat.getColor(getApplication(), R.color.colorOrange));
-                    contador = "4";
                     Toast.makeText(getApplication(),"Esperando a que el pasajero aborde la unidad",Toast.LENGTH_LONG).show();
                 }
-                else if(contador.equals("4")){
+                else if(contador==3){
                     update_status(id_var,4);
+                    contador=0;
                     String orig= global.getLATITUD_CLIENTE()+","+global.getLONGITUD_CLIENTE();
                     String dest =  global.getLATITUD_DESTINO()+","+global.getLONGITUD_DESTINO();
                     coordinates_origin = orig;
                     coordinates_destination = dest;
                     sendRequest(orig,dest);
                     btn_status.setBackgroundColor(Color.RED);
-                    contador = "";
                     mapFragment.getMapAsync(Home.this);
                     doTimerTask2();
                     Toast.makeText(getApplication(),"El pasajero ha abordado el taxi, estás dirigiéndote a su destino",Toast.LENGTH_LONG).show();
@@ -177,8 +175,35 @@ public class Home extends AppCompatActivity
 
         doTimerTask();
         doTimerTask2();
+        insertLocation(id_var, latitude, longitude,0);
+    }
+    public void insertLocation(int id, double latitud, double longitud, int estatus){
+        APIService service = APIClient.getClient().create(APIService.class);
 
+        Call<MSG> userCall = service.insertLocation(id, latitud, longitud, estatus);
 
+        userCall.enqueue(new Callback<MSG>() {
+            @Override
+            public void onResponse(Call<MSG> call, Response<MSG> response) {
+            }
+            @Override
+            public void onFailure(Call<MSG> call, Throwable t) {
+            }
+        });
+    }
+    public void deleteLocation(int id){
+        APIService service = APIClient.getClient().create(APIService.class);
+
+        Call<MSG> userCall = service.deleteLocation(id);
+
+        userCall.enqueue(new Callback<MSG>() {
+            @Override
+            public void onResponse(Call<MSG> call, Response<MSG> response) {
+            }
+            @Override
+            public void onFailure(Call<MSG> call, Throwable t) {
+            }
+        });
     }
     public void getLoc(){
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -245,7 +270,7 @@ public class Home extends AppCompatActivity
                                         coordinates_destination = dest;
                                         btn_status.setEnabled(true);
                                         btn_status.setBackgroundColor(Color.YELLOW);
-                                        contador= "3";
+                                        contador++;
                                         Toast.makeText(getApplication(),"Conductor en camino...",Toast.LENGTH_SHORT).show();
                                         update_status(id_var,2);
                                         delete_solicitud(id_var);
@@ -256,6 +281,7 @@ public class Home extends AppCompatActivity
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         //Action for "Cancel".
+                                        contador=0;
                                         delete_solicitud(id_var);
                                         doTimerTask2();
                                         Toast.makeText(getApplication(),"Ha cancelado el viaje solicitado",Toast.LENGTH_SHORT).show();
@@ -264,10 +290,9 @@ public class Home extends AppCompatActivity
                                 });
 
                                 final AlertDialog alert = dialog.create();
-                                alert.show();
-
-
-
+                                if(!isFinishing()){
+                                    alert.show();
+                                }
                             }
                             rectificar(result);
                         }
@@ -288,6 +313,7 @@ public class Home extends AppCompatActivity
     }
     @Override
     public void onBackPressed() {
+        deleteLocation(id_var);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
@@ -613,7 +639,7 @@ public class Home extends AppCompatActivity
             });
 
         } catch (Exception e) {
-            Toast.makeText(getApplication(), "Hubo un error al obtener la ubicación .2" + e, Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplication(), "Hubo un error al obtener la ubicación " + e, Toast.LENGTH_LONG).show();
         }
 
     }
@@ -622,4 +648,5 @@ public class Home extends AppCompatActivity
     public void startActivityForResult(int requestCode, int resultCode, Intent data) {
 
     }
+
 }

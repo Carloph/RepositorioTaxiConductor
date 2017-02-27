@@ -25,11 +25,20 @@ public interface APIService {
                                 @Field("ESTATUS") int estado);
 
     @FormUrlEncoded
+    @POST("services/insert_driver_location.php")
+    Call<MSG> insertLocation(@Field("ID_CHOFER") int idchofer,
+                             @Field("LATITUD") double latitud,
+                             @Field("LONGITUD") double longitud,
+                             @Field("ESTATUS") int estatus);
+
+    @FormUrlEncoded
     @POST("services/delete_solicitud.php")
-    Call<MSG> deleteSolicitud(@Field("ID_CHOFER") int idchofer
-                          );
+    Call<MSG> deleteSolicitud(@Field("ID_CHOFER") int idchofer);
 
     @GET("obtener_choferes_por_user.php")
     Call<getDriverCredential> getLogin(@Query("USUARIO") String usuario);
 
+    @FormUrlEncoded
+    @POST("services/delete_location.php")
+    Call<MSG> deleteLocation(@Field("ID_CHOFER") int id);
 }
