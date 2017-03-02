@@ -136,6 +136,8 @@ public class Home extends AppCompatActivity
         btn_status = (Button) findViewById(R.id.button_status);
         tv_distance = (TextView) findViewById(R.id.tvDistance);
         tv_duration = (TextView) findViewById(R.id.tvDuration);
+        tv_msj = (TextView)findViewById(R.id.tv_msj);
+
 
 
         btn_status.setOnClickListener(new View.OnClickListener() {
@@ -172,7 +174,6 @@ public class Home extends AppCompatActivity
                     sendRequest(orig,dest);
                     btn_status.setBackgroundColor(Color.RED);
                     mapFragment.getMapAsync(Home.this);
-                    tv_msj = (TextView)findViewById(R.id.tv_msj);
                     tv_msj.setText("");
                     doTimerTask2();
                     Toast.makeText(getApplication(),"El pasajero ha abordado el taxi, estás dirigiéndote a su destino",Toast.LENGTH_LONG).show();
@@ -370,7 +371,8 @@ public class Home extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            return true;
+            deleteLocation(id_var);
+            finish();
         }
 
         return super.onOptionsItemSelected(item);
@@ -440,7 +442,6 @@ public class Home extends AppCompatActivity
                .title(direction));
             melbourne.showInfoWindow();
     }
-
 
     public void doTimerTask(){
 
