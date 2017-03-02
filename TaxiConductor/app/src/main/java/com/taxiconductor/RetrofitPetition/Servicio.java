@@ -7,7 +7,6 @@ import com.google.gson.annotations.SerializedName;
  */
 
 public class Servicio {
-
     @SerializedName("LATITUD_CLIENTE")
     private double LATITUD_CLIENTE;
     @SerializedName("LONGITUD_CLIENTE")
@@ -16,8 +15,6 @@ public class Servicio {
     private double LATITUD_DESTINO;
     @SerializedName("LONGITUD_DESTINO")
     private double LONGITUD_DESTINO;
-    @SerializedName("MENSAJE")
-    private String MENSAJE;
 
     public double getLATITUD_CLIENTE() {
         return LATITUD_CLIENTE;
@@ -49,13 +46,5 @@ public class Servicio {
 
     public void setLONGITUD_DESTINO(double LONGITUD_DESTINO) {
         this.LONGITUD_DESTINO = LONGITUD_DESTINO;
-    }
-
-    public String getMENSAJE() {
-        return MENSAJE;
-    }
-
-    public void setMENSAJE(String MENSAJE) {
-        this.MENSAJE = MENSAJE;
     }
 }

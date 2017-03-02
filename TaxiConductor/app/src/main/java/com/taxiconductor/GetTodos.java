@@ -1,7 +1,6 @@
 package com.taxiconductor;
 
 import com.taxiconductor.RetrofitPetition.Servicio;
-import com.taxiconductor.RetrofitPetition.UpdateDriver;
 import com.taxiconductor.RetrofitPetition.getDriverCredential;
 
 import retrofit2.Call;
@@ -18,7 +17,4 @@ public interface GetTodos {
 
     @GET("obtener_solicitudes_por_id.php")
     Call<Servicio> escucha(@Query("ID_CHOFER") int id);
-
-    @GET("obtener_ubicacion_choferes_por_id.php")
-    Call<UpdateDriver> verificar(@Query("ID_CHOFER") int id);
 }

@@ -14,7 +14,7 @@ import retrofit2.http.Query;
 public interface APIService {
 
     @FormUrlEncoded
-    @POST("services/update_driver_location.php  ")
+    @POST("services/update_driver_location.php")
     Call<MSG> updateCoordenadas(@Field("ID_CHOFER") int idchofer,
                                   @Field("LATITUD") double latitud,
                                   @Field("LONGITUD") double longitud);

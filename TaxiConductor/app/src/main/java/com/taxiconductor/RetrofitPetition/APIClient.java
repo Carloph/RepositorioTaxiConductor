@@ -12,7 +12,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class APIClient {
 
-    public static final String BASE_URL = "http://seec.com.mx/taxaApp/";
+    public static final String BASE_URL = "http://taxa.pe.hu/";
     private static Retrofit retrofit = null;
 
 

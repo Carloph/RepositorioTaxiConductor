@@ -8,31 +8,29 @@ import com.google.gson.annotations.SerializedName;
 
 public class UpdateDriver {
 
-    @SerializedName("ID_UBICACION")
-    private int id;
     @SerializedName("ID_CHOFER")
     private int idchofer;
     @SerializedName("LATITUD")
     private double latitud;
     @SerializedName("LONGITUD")
     private double longitud;
-    @SerializedName("ESTATUS")
-    private int estatus;
 
-    public int getId() {
-        return id;
+    public UpdateDriver(){
+
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public UpdateDriver(int idchofer, double latitud, double longitud) {
+        this.idchofer = idchofer;
+        this.latitud = latitud;
+        this.longitud = longitud;
     }
 
-    public int getIdchofer() {
+    public int getIdusario() {
         return idchofer;
     }
 
-    public void setIdchofer(int idchofer) {
-        this.idchofer = idchofer;
+    public void setIdusario(int idusario) {
+        this.idchofer = idusario;
     }
 
     public double getLatitud() {
@@ -49,13 +47,5 @@ public class UpdateDriver {
 
     public void setLongitud(double longitud) {
         this.longitud = longitud;
-    }
-
-    public int getEstatus() {
-        return estatus;
-    }
-
-    public void setEstatus(int estatus) {
-        this.estatus = estatus;
     }
 }
