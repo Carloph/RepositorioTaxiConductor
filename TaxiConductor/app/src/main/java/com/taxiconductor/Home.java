@@ -48,6 +48,8 @@ import com.taxiconductor.RetrofitPetition.APIClient;
 import com.taxiconductor.RetrofitPetition.APIService;
 import com.taxiconductor.RetrofitPetition.MSG;
 import com.taxiconductor.RetrofitPetition.Servicio;
+import com.taxiconductor.RetrofitPetition.UpdateDriver;
+
 import android.os.Handler;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -69,11 +71,12 @@ public class Home extends AppCompatActivity
     public SupportMapFragment mapFragment;
     LocationManager locationManager;
     private TextView tv_usuario;
+    private TextView tv_msj;
     static double latitude;
     static double longitude;
     static String direction;
     private Button btn_status;
-    static int contador=0;
+    static int contador;
     private static Retrofit retrofit;
     private static GetTodos getTodos;
     static int id_var;
@@ -105,16 +108,18 @@ public class Home extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
-        id_var = (int)getIntent().getExtras().getSerializable("id");
-        String usuario = (String)getIntent().getExtras().getSerializable("usuario");
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
         retrofit = new Retrofit.Builder()
-                .baseUrl("http://taxa.pe.hu/")
+                .baseUrl("http://seec.com.mx/taxaApp/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         getTodos = retrofit.create(GetTodos.class);
+        id_var = (int)getIntent().getExtras().getSerializable("id");
+        ExistSession(id_var);
+        setContentView(R.layout.activity_home);
+        contador=0;
+        String usuario = (String)getIntent().getExtras().getSerializable("usuario");
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         tv_usuario = (TextView)findViewById(R.id.tv_usuario_chofer);
         tv_usuario.setText("Usted está logueado como: "+usuario);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -167,6 +172,8 @@ public class Home extends AppCompatActivity
                     sendRequest(orig,dest);
                     btn_status.setBackgroundColor(Color.RED);
                     mapFragment.getMapAsync(Home.this);
+                    tv_msj = (TextView)findViewById(R.id.tv_msj);
+                    tv_msj.setText("");
                     doTimerTask2();
                     Toast.makeText(getApplication(),"El pasajero ha abordado el taxi, estás dirigiéndote a su destino",Toast.LENGTH_LONG).show();
                 }
@@ -177,6 +184,32 @@ public class Home extends AppCompatActivity
         doTimerTask2();
         insertLocation(id_var, latitude, longitude,0);
     }
+
+    private void ExistSession(final int id) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Call<UpdateDriver> call = getTodos.verificar(id);
+                try {
+                    Response<UpdateDriver> response = call.execute();
+                    final UpdateDriver result = response.body();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(result!=null){
+                                Toast.makeText(getApplication(),"Hay una sesión abierta con esta cuenta, favor de iniciar sesión con una cuenta distinta",Toast.LENGTH_LONG).show();
+                                deleteLocation(id);
+                                Intent intent_login = new Intent(Home.this, Login.class);
+                                startActivity(intent_login);
+                                finish();
+                            }
+                        }
+                    });
+                } catch (IOException e) {}
+            }
+        }).start();
+    }
+
     public void insertLocation(int id, double latitud, double longitud, int estatus){
         APIService service = APIClient.getClient().create(APIService.class);
 
@@ -221,7 +254,6 @@ public class Home extends AppCompatActivity
             update_data(id_var,latitude,longitude);
         }
         locationManager.requestLocationUpdates(bestProvider, 20000, 0, this);
-        update_data(id_var,latitude,longitude);
 
     }
 
@@ -250,11 +282,10 @@ public class Home extends AppCompatActivity
                 try {
                     final Response<Servicio> response = call.execute();
                     final Servicio result = response.body();
-                    System.out.println(result);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (response!=null){
+                            if (result!=null){
                                 stopTask2();
                                 AlertDialog.Builder dialog = new AlertDialog.Builder(Home.this);
                                 dialog.setCancelable(false);
@@ -272,10 +303,11 @@ public class Home extends AppCompatActivity
                                         btn_status.setBackgroundColor(Color.YELLOW);
                                         contador++;
                                         Toast.makeText(getApplication(),"Conductor en camino...",Toast.LENGTH_SHORT).show();
+                                        tv_msj = (TextView)findViewById(R.id.tv_msj);
+                                        tv_msj.setText(result.getMENSAJE().toString());
                                         update_status(id_var,2);
                                         delete_solicitud(id_var);
                                         sendRequest(orig,dest);
-
                                     }
                                 }).setNegativeButton("Cancelar ", new DialogInterface.OnClickListener() {
                                     @Override

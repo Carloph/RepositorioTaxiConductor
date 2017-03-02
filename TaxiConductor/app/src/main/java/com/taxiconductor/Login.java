@@ -13,6 +13,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.taxiconductor.RetrofitPetition.Servicio;
+import com.taxiconductor.RetrofitPetition.UpdateDriver;
 import com.taxiconductor.RetrofitPetition.getDriverCredential;
 
 import java.io.IOException;
@@ -57,7 +59,7 @@ public class Login extends AppCompatActivity {
             }
         }
         retrofit = new Retrofit.Builder()
-                .baseUrl("http://taxa.pe.hu/")
+                .baseUrl("http://seec.com.mx/taxaApp/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         getTodos = retrofit.create(GetTodos.class);
@@ -93,7 +95,7 @@ public class Login extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            compareSession(result,usuario,password);
+                            compareSession(result,usuario, password);
                         }
                     });
                 } catch (IOException e) {}
@@ -102,19 +104,20 @@ public class Login extends AppCompatActivity {
     }
     private void compareSession(getDriverCredential credential, String usuario, String password) {
         if (credential != null) {
-            if(password.equals(credential.getCONTRASENIA())){
-                Intent intent_home = new Intent(Login.this, Home.class);
-                intent_home.putExtra("id", credential.getID_CHOFER());
-                intent_home.putExtra("usuario", usuario);
-                startActivity(intent_home);
-                finish();
-            }
-            else{
-                et_password = (EditText)findViewById(R.id.editText_password);
-                et_usuario.setText("");
-                et_password.setText("");
-                Toast.makeText(getApplicationContext(), "Usuario o contraseña incorrecta", Toast.LENGTH_SHORT).show();
-            }
+                if(password.equals(credential.getCONTRASENIA())){
+                    Intent intent_home = new Intent(Login.this, Home.class);
+                    intent_home.putExtra("id", credential.getID_CHOFER());
+                    intent_home.putExtra("usuario", usuario);
+                    startActivity(intent_home);
+                    finish();
+                }
+                else{
+                    et_password = (EditText)findViewById(R.id.editText_password);
+                    et_usuario.setText("");
+                    et_password.setText("");
+                    Toast.makeText(getApplicationContext(), "Usuario o contraseña incorrecta", Toast.LENGTH_SHORT).show();
+                }
         } else {Toast.makeText(getApplicationContext(), "Nombre de usuario incorrecto", Toast.LENGTH_SHORT).show();}
     }
+
 }
