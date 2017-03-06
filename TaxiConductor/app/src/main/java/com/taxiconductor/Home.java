@@ -12,7 +12,9 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.v4.app.ActivityCompat;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
@@ -292,6 +294,10 @@ public class Home extends AppCompatActivity
                                 dialog.setCancelable(false);
                                 dialog.setTitle("Solicitar viaje");
                                 dialog.setMessage("¿Estás seguro de asignar este viaje al taxista?" );
+                                Vibrator v = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+                                MediaPlayer mp = MediaPlayer.create(getApplicationContext(),R.raw.samsung_galaxy_on_time);
+                                mp.start();
+                                v.vibrate(2000);
                                 dialog.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int id) {
@@ -353,6 +359,7 @@ public class Home extends AppCompatActivity
         } else {
             super.onBackPressed();
         }
+        finish();
     }
 
     @Override
