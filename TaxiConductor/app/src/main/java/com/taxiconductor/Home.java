@@ -37,6 +37,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -82,6 +83,8 @@ public class Home extends AppCompatActivity
     private static Retrofit retrofit;
     private static GetTodos getTodos;
     static int id_var;
+    private static String usuario;
+    private int saved_state;
 
     TimerTask mTimerTask;
     final Handler handler = new Handler();
@@ -98,12 +101,11 @@ public class Home extends AppCompatActivity
     private List<Polyline> polylinePaths = new ArrayList<>();
     private ProgressDialog progressDialog;
 
-    public static String coordinates_origin="";
-    public static String coordinates_destination="";
-
+    public static String coordinates_driver;
+    public static String coordinates_origin;
+    public static String coordinates_destination;
+    private static LatLng latLng;
     static Servicio global;
-
-
     public TextView tv_distance, tv_duration;
 
 
@@ -115,15 +117,63 @@ public class Home extends AppCompatActivity
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         getTodos = retrofit.create(GetTodos.class);
-        id_var = (int)getIntent().getExtras().getSerializable("id");
-        ExistSession(id_var);
         setContentView(R.layout.activity_home);
-        contador=0;
-        String usuario = (String)getIntent().getExtras().getSerializable("usuario");
+        btn_status = (Button) findViewById(R.id.button_status);
+        mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
+        if(savedInstanceState!=null){
+            saved_state = savedInstanceState.getInt("saved_state");
+            contador = savedInstanceState.getInt("contador");
+            id_var = savedInstanceState.getInt("id_var");
+            usuario = savedInstanceState.getString("usuario");
+
+            if(saved_state==0){
+                Log.e("onResponse", "El bundle recuperó el estado: " + contador + " y el id: " + id_var);
+            }
+            else if(saved_state==1){
+                btn_status.setBackgroundColor(Color.GREEN);
+                Log.e("onResponse", "El bundle recuperó el estado: " + contador + " y el id: " + id_var);
+            }
+            else if(saved_state==2){
+                coordinates_driver = savedInstanceState.getString("driver");
+                coordinates_origin = savedInstanceState.getString("origen");
+                coordinates_destination = savedInstanceState.getString("destino");
+                sendRequest(coordinates_driver,coordinates_destination);
+                btn_status.setBackgroundColor(Color.YELLOW);
+                Log.e("onResponse", "El bundle recuperó el estado: " + contador + " y el id: " + id_var);
+            }
+            else if(saved_state==3){
+                coordinates_origin = savedInstanceState.getString("origen");
+                coordinates_destination = savedInstanceState.getString("destino");
+                sendRequest(coordinates_origin,coordinates_destination);
+                btn_status.setBackgroundColor(ContextCompat.getColor(getApplication(), R.color.colorOrange));
+                Log.e("onResponse", "El bundle recuperó el estado: " + contador + " y el id: " + id_var);
+            }else if(saved_state==4){
+                coordinates_driver = savedInstanceState.getString("driver");
+                coordinates_destination = savedInstanceState.getString("destino");
+                sendRequest(coordinates_driver,coordinates_destination);
+                btn_status.setBackgroundColor(Color.RED);
+                Log.e("onResponse", "El bundle recuperó el estado: " + contador + " y el id: " + id_var);
+            }
+        }
+        else{
+            id_var = (int)getIntent().getExtras().getSerializable("id");
+            usuario = (String)getIntent().getExtras().getSerializable("usuario");
+            ExistSession(id_var);
+            contador=0;
+            saved_state=0;
+        }
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         tv_usuario = (TextView)findViewById(R.id.tv_usuario_chofer);
         tv_usuario.setText("Usted está logueado como: "+usuario);
+        tv_distance = (TextView) findViewById(R.id.tvDistance);
+        tv_duration = (TextView) findViewById(R.id.tvDuration);
+        tv_msj = (TextView)findViewById(R.id.tv_msj);
+
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -132,24 +182,17 @@ public class Home extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-
-        btn_status = (Button) findViewById(R.id.button_status);
-        tv_distance = (TextView) findViewById(R.id.tvDistance);
-        tv_duration = (TextView) findViewById(R.id.tvDuration);
-        tv_msj = (TextView)findViewById(R.id.tv_msj);
-
-
-
         btn_status.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 if(contador==0){
+                    doTimerTask();
+                    doTimerTask2();
                     contador++;
-                    update_status(id_var,1);
+                    saved_state=1;
                     btn_status.setBackgroundColor(Color.GREEN);
+                    update_status(id_var,1);
                     Toast.makeText(getApplication(),"Ahora está disponible, espere una solicitud de viaje",Toast.LENGTH_LONG).show();
                     mMap.clear();
                     tv_distance.setText("0 km");
@@ -163,17 +206,17 @@ public class Home extends AppCompatActivity
                 else if(contador==2){
                     update_status(id_var,3);
                     contador++;
+                    saved_state = 3;
                     btn_status.setBackgroundColor(ContextCompat.getColor(getApplication(), R.color.colorOrange));
                     Toast.makeText(getApplication(),"Esperando a que el pasajero aborde la unidad",Toast.LENGTH_LONG).show();
                 }
                 else if(contador==3){
                     update_status(id_var,4);
                     contador=0;
-                    String orig= global.getLATITUD_CLIENTE()+","+global.getLONGITUD_CLIENTE();
-                    String dest =  global.getLATITUD_DESTINO()+","+global.getLONGITUD_DESTINO();
-                    coordinates_origin = orig;
-                    coordinates_destination = dest;
-                    sendRequest(orig,dest);
+                    saved_state=4;
+                    coordinates_origin = global.getLATITUD_CLIENTE()+","+global.getLONGITUD_CLIENTE();
+                    coordinates_destination =  global.getLATITUD_DESTINO()+","+global.getLONGITUD_DESTINO();
+                    sendRequest(coordinates_origin,coordinates_destination);
                     btn_status.setBackgroundColor(Color.RED);
                     mapFragment.getMapAsync(Home.this);
                     tv_msj.setText("");
@@ -182,9 +225,6 @@ public class Home extends AppCompatActivity
                 }
             }
         });
-
-        doTimerTask();
-        doTimerTask2();
         insertLocation(id_var, latitude, longitude,0);
     }
 
@@ -250,12 +290,18 @@ public class Home extends AppCompatActivity
                 != PackageManager.PERMISSION_GRANTED) return;
 
         Location location = locationManager.getLastKnownLocation(bestProvider);
+
         if (location != null) {
             onLocationChanged(location);
+            setLocation(location);
             latitude = location.getLatitude();
             longitude =  location.getLongitude();
             update_data(id_var,latitude,longitude);
+            latLng = new LatLng(latitude, longitude);
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(35));
         }
+
         locationManager.requestLocationUpdates(bestProvider, 20000, 0, this);
 
     }
@@ -302,19 +348,19 @@ public class Home extends AppCompatActivity
                                     @Override
                                     public void onClick(DialogInterface dialog, int id) {
                                         global  = result;
-                                        String orig = String.valueOf(latitude)+","+String.valueOf(longitude);
-                                        coordinates_origin =orig;
-                                        String dest =  result.getLATITUD_CLIENTE()+","+result.getLONGITUD_CLIENTE();
-                                        coordinates_destination = dest;
+                                        coordinates_driver  = String.valueOf(latitude)+","+String.valueOf(longitude);
+                                        coordinates_origin = result.getLATITUD_DESTINO()+","+result.getLONGITUD_DESTINO();
+                                        coordinates_destination =  result.getLATITUD_CLIENTE()+","+result.getLONGITUD_CLIENTE();
                                         btn_status.setEnabled(true);
                                         btn_status.setBackgroundColor(Color.YELLOW);
+                                        saved_state=2;
                                         contador++;
                                         Toast.makeText(getApplication(),"Conductor en camino...",Toast.LENGTH_SHORT).show();
                                         tv_msj = (TextView)findViewById(R.id.tv_msj);
                                         tv_msj.setText(result.getMENSAJE().toString());
                                         update_status(id_var,2);
                                         delete_solicitud(id_var);
-                                        sendRequest(orig,dest);
+                                        sendRequest(coordinates_driver,coordinates_destination);
                                     }
                                 }).setNegativeButton("Cancelar ", new DialogInterface.OnClickListener() {
                                     @Override
@@ -412,10 +458,7 @@ public class Home extends AppCompatActivity
 
     @Override
     public void onLocationChanged(Location location) {
-        latitude = location.getLatitude();
-        longitude = location.getLongitude();
-        setLocation(location);
-       // mapFragment.getMapAsync(this);
+
     }
 
     @Override
@@ -689,4 +732,46 @@ public class Home extends AppCompatActivity
 
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        if(saved_state==0){
+            outState.putInt("saved_state",saved_state);
+            outState.putInt("id_var",id_var);
+            outState.putInt("contador",contador);
+            outState.putString("usuario", usuario);
+        }
+        else if(saved_state==1){
+            outState.putInt("saved_state",saved_state);
+            outState.putInt("id_var",id_var);
+            outState.putInt("contador",contador);
+            outState.putString("usuario", usuario);
+    }
+        else if(saved_state==2){
+            outState.putInt("saved_state",saved_state);
+            outState.putInt("id_var",id_var);
+            outState.putInt("contador",contador);
+            outState.putString("usuario", usuario);
+            outState.putString("driver", coordinates_driver);
+            outState.putString("origen", coordinates_origin);
+            outState.putString("destino", coordinates_destination);
+        }
+        else if(saved_state==3){
+            outState.putInt("saved_state",saved_state);
+            outState.putInt("id_var",id_var);
+            outState.putInt("contador",contador);
+            outState.putString("usuario", usuario);
+            outState.putString("origen", coordinates_origin);
+            outState.putString("destino", coordinates_destination);
+        }
+        else if(saved_state==4){
+            outState.putInt("saved_state",saved_state);
+            outState.putInt("id_var",id_var);
+            outState.putInt("contador",contador);
+            outState.putString("usuario", usuario);
+            outState.putString("driver", coordinates_driver);
+            outState.putString("destino", coordinates_destination);
+        }
+
+        super.onSaveInstanceState(outState);
+    }
 }
