@@ -121,7 +121,6 @@ public class Home extends AppCompatActivity
         btn_status = (Button) findViewById(R.id.button_status);
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
         if(savedInstanceState!=null){
             saved_state = savedInstanceState.getInt("saved_state");
             contador = savedInstanceState.getInt("contador");
@@ -225,32 +224,22 @@ public class Home extends AppCompatActivity
                 }
             }
         });
-        insertLocation(id_var, latitude, longitude,0);
     }
 
     private void ExistSession(final int id) {
-        new Thread(new Runnable() {
+        APIService service = APIClient.getClient().create(APIService.class);
+
+        Call<MSG> userCall = service.deleteLocation(id);
+
+        userCall.enqueue(new Callback<MSG>() {
             @Override
-            public void run() {
-                Call<UpdateDriver> call = getTodos.verificar(id);
-                try {
-                    Response<UpdateDriver> response = call.execute();
-                    final UpdateDriver result = response.body();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(result!=null){
-                                Toast.makeText(getApplication(),"Hay una sesión abierta con esta cuenta, favor de iniciar sesión con una cuenta distinta",Toast.LENGTH_LONG).show();
-                                deleteLocation(id);
-                                Intent intent_login = new Intent(Home.this, Login.class);
-                                startActivity(intent_login);
-                                finish();
-                            }
-                        }
-                    });
-                } catch (IOException e) {}
+            public void onResponse(Call<MSG> call, Response<MSG> response) {
+                insertLocation(id_var, latitude,longitude,0);
             }
-        }).start();
+            @Override
+            public void onFailure(Call<MSG> call, Throwable t) {
+            }
+        });
     }
 
     public void insertLocation(int id, double latitud, double longitud, int estatus){
@@ -267,6 +256,7 @@ public class Home extends AppCompatActivity
             }
         });
     }
+
     public void deleteLocation(int id){
         APIService service = APIClient.getClient().create(APIService.class);
 
@@ -281,6 +271,7 @@ public class Home extends AppCompatActivity
             }
         });
     }
+
     public void getLoc(){
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         Criteria criteria = new Criteria();
@@ -293,34 +284,16 @@ public class Home extends AppCompatActivity
 
         if (location != null) {
             onLocationChanged(location);
-            setLocation(location);
             latitude = location.getLatitude();
             longitude =  location.getLongitude();
             update_data(id_var,latitude,longitude);
             latLng = new LatLng(latitude, longitude);
             mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(35));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
         }
 
-        locationManager.requestLocationUpdates(bestProvider, 20000, 0, this);
+        locationManager.requestLocationUpdates(bestProvider, 3000, 0, this);
 
-    }
-
-    public void setLocation(Location loc) {
-        if (loc.getLatitude() != 0.0 && loc.getLongitude() != 0.0) {
-            try {
-                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-                List<android.location.Address> list = geocoder.getFromLocation(loc.getLatitude(), loc.getLongitude(), 1);
-                if (!list.isEmpty()) {
-                    android.location.Address DirCalle = list.get(0);
-                    direction= DirCalle.getAddressLine(0);
-                }
-
-            } catch (IOException e) {
-                System.out.println("No hay datos");
-                e.printStackTrace();
-            }
-        }
     }
 
     private void escuchaPeticion(final int id_chofer) {
@@ -399,6 +372,7 @@ public class Home extends AppCompatActivity
     @Override
     public void onBackPressed() {
         deleteLocation(id_var);
+        saved_state=6;
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
@@ -424,6 +398,7 @@ public class Home extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            saved_state=6;
             deleteLocation(id_var);
             finish();
         }
@@ -508,7 +483,7 @@ public class Home extends AppCompatActivity
             }};
 
         // public void schedule (TimerTask task, long delay, long period)
-        t.schedule(mTimerTask, 0, 10000);  //
+        t.schedule(mTimerTask, 0, 5000);  //
 
     }
     public void doTimerTask2(){
@@ -771,7 +746,9 @@ public class Home extends AppCompatActivity
             outState.putString("driver", coordinates_driver);
             outState.putString("destino", coordinates_destination);
         }
-
+        else if(saved_state==6){
+            outState.clear();
+        }
         super.onSaveInstanceState(outState);
     }
 }
