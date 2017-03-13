@@ -98,7 +98,9 @@ public class Login extends AppCompatActivity {
                             compareSession(result,usuario, password);
                         }
                     });
-                } catch (IOException e) {}
+                } catch (IOException e) {
+
+                }
             }
         }).start();
     }
@@ -110,14 +112,15 @@ public class Login extends AppCompatActivity {
                     intent_home.putExtra("usuario", usuario);
                     startActivity(intent_home);
                     finish();
-                }
-                else{
+                } else{
                     et_password = (EditText)findViewById(R.id.editText_password);
                     et_usuario.setText("");
                     et_password.setText("");
                     Toast.makeText(getApplicationContext(), "Usuario o contraseña incorrecta", Toast.LENGTH_SHORT).show();
                 }
-        } else {Toast.makeText(getApplicationContext(), "Nombre de usuario incorrecto", Toast.LENGTH_SHORT).show();}
+        } else {
+            Toast.makeText(getApplicationContext(), "Nombre de usuario incorrecto", Toast.LENGTH_SHORT).show();
+        }
     }
 
 }
