@@ -79,6 +79,7 @@ public class Home extends AppCompatActivity
     static double longitude;
     static String direction;
     private Button btn_status;
+    private Button btn_status_two;
     static int contador;
     private static Retrofit retrofit;
     private static GetTodos getTodos;
@@ -108,6 +109,8 @@ public class Home extends AppCompatActivity
     static Servicio global;
     public TextView tv_distance, tv_duration;
 
+    public boolean validator = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +122,7 @@ public class Home extends AppCompatActivity
         getTodos = retrofit.create(GetTodos.class);
         setContentView(R.layout.activity_home);
         btn_status = (Button) findViewById(R.id.button_status);
+        btn_status_two = (Button) findViewById(R.id.button_status_two);
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         if(savedInstanceState!=null){
@@ -155,6 +159,14 @@ public class Home extends AppCompatActivity
                 btn_status.setBackgroundColor(Color.RED);
                 Log.e("onResponse", "El bundle recuperó el estado: " + contador + " y el id: " + id_var);
             }
+            else if(saved_state == 5){
+                validator = savedInstanceState.getBoolean("validador");
+                if(validator){
+                    btn_status_two.setBackgroundColor(ContextCompat.getColor(getApplication(),R.color.black));
+                }else {
+                    btn_status_two.setBackgroundColor(ContextCompat.getColor(getApplication(),R.color.grey));
+                }
+            }
         }
         else{
             id_var = (int)getIntent().getExtras().getSerializable("id");
@@ -186,6 +198,10 @@ public class Home extends AppCompatActivity
             public void onClick(View v) {
 
                 if(contador==0){
+                    if(validator){
+                        btn_status_two.setBackgroundColor(ContextCompat.getColor(getApplication(),R.color.grey));
+                        validator = false;
+                    }
                     doTimerTask();
                     doTimerTask2();
                     contador++;
@@ -199,14 +215,14 @@ public class Home extends AppCompatActivity
 
                 }
                 else if(contador==1){
-                    btn_status.setEnabled(false);
+
                     Toast.makeText(getApplication(),"No puede cambiar de estado hasta que tenga una solicitud de viaje",Toast.LENGTH_LONG).show();
                 }
                 else if(contador==2){
                     update_status(id_var,3);
                     contador++;
                     saved_state = 3;
-                    btn_status.setBackgroundColor(ContextCompat.getColor(getApplication(), R.color.colorOrange));
+                    btn_status.setBackgroundColor(Color.BLUE);
                     Toast.makeText(getApplication(),"Esperando a que el pasajero aborde la unidad",Toast.LENGTH_LONG).show();
                 }
                 else if(contador==3){
@@ -221,6 +237,39 @@ public class Home extends AppCompatActivity
                     tv_msj.setText("");
                     doTimerTask2();
                     Toast.makeText(getApplication(),"El pasajero ha abordado el taxi, estás dirigiéndote a su destino",Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
+        btn_status_two.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if(validator){
+                    update_status(id_var,0);
+                    saved_state = 5;
+                    btn_status_two.setBackgroundColor(ContextCompat.getColor(getApplication(),R.color.grey));
+                    validator = false;
+                }else{
+                    if(contador == 1){
+                        btn_status.setBackgroundColor(ContextCompat.getColor(getApplication(),R.color.grey));
+                        update_status(id_var,5);
+                        validator = true;
+                        saved_state = 5;
+                        contador = 0;
+                        btn_status_two.setBackgroundColor(ContextCompat.getColor(getApplication(),R.color.black));
+                    }
+                    else if(contador == 2 || contador == 3 || contador == 0){
+
+                        Toast.makeText(getApplication(),"Usted cuenta con un viaje asignado, ponga su estado en verde para ejecutar ésta acción",Toast.LENGTH_LONG).show();
+
+                    }
+                    else {
+                        update_status(id_var,5);
+                        validator = true;
+                        saved_state = 5;
+                        btn_status_two.setBackgroundColor(ContextCompat.getColor(getApplication(),R.color.black));
+                    }
                 }
             }
         });
@@ -470,7 +519,7 @@ public class Home extends AppCompatActivity
 
     public void doTimerTask(){
 
-        mTimerTask = new TimerTask() {
+        this.mTimerTask = new TimerTask() {
             public void run() {
                 handler.post(new Runnable() {
                     public void run() {
@@ -483,7 +532,7 @@ public class Home extends AppCompatActivity
             }};
 
         // public void schedule (TimerTask task, long delay, long period)
-        t.schedule(mTimerTask, 0, 5000);  //
+        this.t.schedule(this.mTimerTask, 0, 5000);  //
 
     }
     public void doTimerTask2(){
@@ -494,7 +543,6 @@ public class Home extends AppCompatActivity
                     public void run() {
                         nCounter2++;
                         // update TextView
-
                         escuchaPeticion(id_var);
 
                     }
@@ -517,11 +565,11 @@ public class Home extends AppCompatActivity
     }
 
     public void stopTask2(){
-        if(mTimerTask2!=null){
+        if(this.mTimerTask2!=null){
 
             Log.e("Se ha cancelado", "la ubicación de los taxis");
-
-            mTimerTask2.cancel();
+            this.mTimerTask2.cancel();
+            this.mTimerTask2 = null;
         }
     }
 
@@ -720,7 +768,7 @@ public class Home extends AppCompatActivity
             outState.putInt("id_var",id_var);
             outState.putInt("contador",contador);
             outState.putString("usuario", usuario);
-    }
+        }
         else if(saved_state==2){
             outState.putInt("saved_state",saved_state);
             outState.putInt("id_var",id_var);
@@ -729,6 +777,7 @@ public class Home extends AppCompatActivity
             outState.putString("driver", coordinates_driver);
             outState.putString("origen", coordinates_origin);
             outState.putString("destino", coordinates_destination);
+
         }
         else if(saved_state==3){
             outState.putInt("saved_state",saved_state);
@@ -737,6 +786,7 @@ public class Home extends AppCompatActivity
             outState.putString("usuario", usuario);
             outState.putString("origen", coordinates_origin);
             outState.putString("destino", coordinates_destination);
+
         }
         else if(saved_state==4){
             outState.putInt("saved_state",saved_state);
@@ -745,6 +795,8 @@ public class Home extends AppCompatActivity
             outState.putString("usuario", usuario);
             outState.putString("driver", coordinates_driver);
             outState.putString("destino", coordinates_destination);
+        }else if(saved_state == 5){
+            outState.putBoolean("validador",validator);
         }
         else if(saved_state==6){
             outState.clear();
