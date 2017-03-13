@@ -1,4 +1,4 @@
-package com.taxiconductor;
+﻿package com.taxiconductor;
 
 import android.Manifest;
 import android.app.ProgressDialog;
@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Criteria;
-import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -132,11 +131,10 @@ public class Home extends AppCompatActivity
             usuario = savedInstanceState.getString("usuario");
 
             if(saved_state==0){
-                Log.e("onResponse", "El bundle recuperó el estado: " + contador + " y el id: " + id_var);
+
             }
             else if(saved_state==1){
                 btn_status.setBackgroundColor(Color.GREEN);
-                Log.e("onResponse", "El bundle recuperó el estado: " + contador + " y el id: " + id_var);
             }
             else if(saved_state==2){
                 coordinates_driver = savedInstanceState.getString("driver");
@@ -144,20 +142,17 @@ public class Home extends AppCompatActivity
                 coordinates_destination = savedInstanceState.getString("destino");
                 sendRequest(coordinates_driver,coordinates_destination);
                 btn_status.setBackgroundColor(Color.YELLOW);
-                Log.e("onResponse", "El bundle recuperó el estado: " + contador + " y el id: " + id_var);
             }
             else if(saved_state==3){
                 coordinates_origin = savedInstanceState.getString("origen");
                 coordinates_destination = savedInstanceState.getString("destino");
                 sendRequest(coordinates_origin,coordinates_destination);
                 btn_status.setBackgroundColor(ContextCompat.getColor(getApplication(), R.color.colorOrange));
-                Log.e("onResponse", "El bundle recuperó el estado: " + contador + " y el id: " + id_var);
             }else if(saved_state==4){
                 coordinates_driver = savedInstanceState.getString("driver");
                 coordinates_destination = savedInstanceState.getString("destino");
                 sendRequest(coordinates_driver,coordinates_destination);
                 btn_status.setBackgroundColor(Color.RED);
-                Log.e("onResponse", "El bundle recuperó el estado: " + contador + " y el id: " + id_var);
             }
             else if(saved_state == 5){
                 validator = savedInstanceState.getBoolean("validador");
@@ -247,7 +242,7 @@ public class Home extends AppCompatActivity
 
                 if(validator){
                     update_status(id_var,0);
-                    saved_state = 5;
+                    saved_state = 0;
                     btn_status_two.setBackgroundColor(ContextCompat.getColor(getApplication(),R.color.grey));
                     validator = false;
                 }else{
@@ -269,6 +264,7 @@ public class Home extends AppCompatActivity
                         validator = true;
                         saved_state = 5;
                         btn_status_two.setBackgroundColor(ContextCompat.getColor(getApplication(),R.color.black));
+                        stopTask2();
                     }
                 }
             }
@@ -401,7 +397,6 @@ public class Home extends AppCompatActivity
                                     alert.show();
                                 }
                             }
-                            rectificar(result);
                         }
                     });
                 } catch (IOException e) {}
@@ -409,15 +404,6 @@ public class Home extends AppCompatActivity
         }).start();
     }
 
-    private void rectificar(Servicio solicitud) {
-        if (solicitud != null) {
-            System.out.println(solicitud.getLATITUD_CLIENTE());
-            System.out.println(solicitud.getLATITUD_DESTINO());
-            System.out.println(solicitud.getLONGITUD_CLIENTE());
-            System.out.println(solicitud.getLONGITUD_DESTINO());
-
-        } else {Toast.makeText(getApplicationContext(), "Nombre de usuario incorrecto", Toast.LENGTH_SHORT).show();}
-    }
     @Override
     public void onBackPressed() {
         deleteLocation(id_var);
@@ -796,6 +782,10 @@ public class Home extends AppCompatActivity
             outState.putString("driver", coordinates_driver);
             outState.putString("destino", coordinates_destination);
         }else if(saved_state == 5){
+            outState.putInt("saved_state",saved_state);
+            outState.putInt("id_var",id_var);
+            outState.putInt("contador",contador);
+            outState.putString("usuario", usuario);
             outState.putBoolean("validador",validator);
         }
         else if(saved_state==6){
