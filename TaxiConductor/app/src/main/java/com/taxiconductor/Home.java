@@ -1,4 +1,4 @@
-﻿package com.taxiconductor;
+package com.taxiconductor;
 
 import android.Manifest;
 import android.app.ProgressDialog;
@@ -36,7 +36,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -50,14 +49,12 @@ import com.taxiconductor.RetrofitPetition.APIClient;
 import com.taxiconductor.RetrofitPetition.APIService;
 import com.taxiconductor.RetrofitPetition.MSG;
 import com.taxiconductor.RetrofitPetition.Servicio;
-import com.taxiconductor.RetrofitPetition.UpdateDriver;
 
 import android.os.Handler;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import retrofit2.Call;
@@ -207,10 +204,8 @@ public class Home extends AppCompatActivity
                     mMap.clear();
                     tv_distance.setText("0 km");
                     tv_duration.setText("0 min");
-
                 }
                 else if(contador==1){
-
                     Toast.makeText(getApplication(),"No puede cambiar de estado hasta que tenga una solicitud de viaje",Toast.LENGTH_LONG).show();
                 }
                 else if(contador==2){
@@ -256,7 +251,7 @@ public class Home extends AppCompatActivity
                     }
                     else if(contador == 2 || contador == 3 || contador == 0){
 
-                        Toast.makeText(getApplication(),"Usted cuenta con un viaje asignado, ponga su estado en verde para ejecutar ésta acción",Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplication(),"Espere a que termine el viaje",Toast.LENGTH_LONG).show();
 
                     }
                     else {
@@ -383,15 +378,12 @@ public class Home extends AppCompatActivity
                                 }).setNegativeButton("Cancelar ", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        //Action for "Cancel".
                                         contador=0;
                                         delete_solicitud(id_var);
                                         doTimerTask2();
                                         Toast.makeText(getApplication(),"Ha cancelado el viaje solicitado",Toast.LENGTH_SHORT).show();
-
                                     }
                                 });
-
                                 final AlertDialog alert = dialog.create();
                                 if(!isFinishing()){
                                     alert.show();
@@ -426,12 +418,8 @@ public class Home extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
+        int id = item.getItemId();
         if (id == R.id.action_settings) {
             saved_state=6;
             deleteLocation(id_var);
@@ -785,7 +773,7 @@ public class Home extends AppCompatActivity
             outState.putInt("saved_state",saved_state);
             outState.putInt("id_var",id_var);
             outState.putInt("contador",contador);
-            outState.putString("usuario", usuario);
+            outState.putString("usuario",usuario);
             outState.putBoolean("validador",validator);
         }
         else if(saved_state==6){
